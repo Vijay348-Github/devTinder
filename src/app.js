@@ -1,53 +1,33 @@
 const express = require("express");
-
 const { adminAuth } = require("./middleware/auth");
-
+const connectDb = require("./config/database");
 const app = express();
+const User = require("./models/user");
 
-// app.use(
-//     "/route",
-//     (req, res, next) => {
-//         console.log("from first router");
-//         res.send("From server with defined port 3000");
-//         next();
-//     },
-//     (req, res) => {
-//         res.send("from router 2");
-//     }
-// );
+app.post("/signup", async (req, res) => {
+    const user = new User({
+        firstName: "Vijay",
+        lastName: "Kishtammgari",
+        email: "abc123@me.com",
+        age: 24,
+        gender: "male",
+    });
 
-// app.get("/user/:id/:name", (req, res) => {
-//     console.log(req.params);
-//     res.send("From get method");
-// })
-
-// app.get(
-//     "/user",
-//     (req, res, next) => {
-//         console.log("Logged from route 1");
-//         next();
-//     },
-//     (req, res) => {
-//         console.log("Logged from route 2");
-//         res.send("from route 2");
-//     }
-// );
-
-// app.all("/user", (req, res) => {
-//     res.send("From all method.");
-// });
-
-app.use("/admin", adminAuth);
-
-app.get("/admin/getdata", (req, res) => {
-    res.send("Admin authorised.")
-})
-
-app.get("/admin/deleteuser", (req, res) => {
-    res.send("User deleted.")
-})
-
-
-app.listen(3000, () => {
-    console.log("Hello world");
+    try {
+        await user.save();
+        res.send("User added successfully.");
+    } catch (error) {
+        console.log("User not added successfully: ", error.message);
+    }
 });
+
+connectDb()
+    .then(() => {
+        console.log("Database connection established succesfully.");
+        app.listen(3000, () => {
+            console.log("Server running on port 3000");
+        });
+    })
+    .catch((err) => {
+        console.log("Database connection not established succesfully");
+    });
