@@ -127,42 +127,49 @@ app.delete("/user", async (req, res) => {
 //     }
 // })
 
-app.patch("/user", async (req, res) => {
-    const userId = req.body._id;
+app.patch("/user/:userId", async (req, res) => {
+    const userId = req.params?.userId;
     const newUser = req.body;
 
     try {
-        await User.findByIdAndUpdate({_id: userId }, newUser);
+        const ALLOWED_UPDATES = ["photo", "about", "gender", "skills"];
+        const isUpdateAllowed = Object.keys(newUser).every((k) =>
+            ALLOWED_UPDATES.includes(k)
+        );
+        if (!isUpdateAllowed) {
+            throw new Error("Update not allowed");
+        }
+        if(newUser?.skills.length > 10){
+            throw new Error("Skills cannot be more than 10.")
+        }
+        await User.findByIdAndUpdate({ _id: userId }, newUser);
         res.send("User updated successfully.");
     } catch (error) {
-        res.status(400).json({details: error.message});
+        res.status(400).json({ details: error.message });
     }
 });
 
-app.delete("/usermany", async (req, res) =>{
+app.delete("/usermany", async (req, res) => {
     const last = req.body.lastName;
-    try{
-        await User.deleteMany({ lastName : last});
-        res.status(200).json({result : "Users deleted successfully."});
-    }catch(error){
-        res.status(500).json({details:error.message});
+    try {
+        await User.deleteMany({ lastName: last });
+        res.status(200).json({ result: "Users deleted successfully." });
+    } catch (error) {
+        res.status(500).json({ details: error.message });
     }
-})
+});
 
 app.patch("/useremail", async (req, res) => {
     const emailAdd = req.body.email;
     const newUser = req.body;
 
-    try{
-        await User.updateOne({email : emailAdd}, newUser);
-        res.status(200).send("One updated successfully.")
-    }catch(error){
-        res.status(500).json({details: error.message});
+    try {
+        await User.updateOne({ email: emailAdd }, newUser);
+        res.status(200).send("One updated successfully.");
+    } catch (error) {
+        res.status(500).json({ details: error.message });
     }
-})
-
-
-
+});
 
 connectDb()
     .then(() => {
