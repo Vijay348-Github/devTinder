@@ -3,12 +3,12 @@ const { adminAuth } = require("./middleware/auth");
 const connectDb = require("./config/database");
 const app = express();
 const User = require("./models/user");
+const { validateUserData } = require("./utils/ValidateUser");
+const bcrypt = require("bcrypt");
 
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
-    // console.log(req.body);
-
     // Hard coded values
 
     // const user = new User({
@@ -21,15 +21,17 @@ app.post("/signup", async (req, res) => {
 
     // Dynamic data
 
-    const user = new User(req.body);
-
-    if (!user.email) {
-        return res
-            .status(400)
-            .json({ error: "Missing required fields: email." });
-    }
 
     try {
+        const { firstName, lastName, email, password } = req.body;
+        const passwordHash = await bcrypt.hash(password, 10);
+        const user = new User({
+            firstName,
+            lastName,
+            email,
+            password: passwordHash,
+        });
+        validateUserData(req);
         await user.save();
         res.send("User added successfully.");
     } catch (error) {
@@ -40,6 +42,30 @@ app.post("/signup", async (req, res) => {
         });
     }
 });
+
+app.post("/login", async (req, res) => {
+    try{
+        const {email, password} = req.body;
+
+        const user = await User.findOne({email: email});
+        if(!user){
+            res.status(400).send("INVALID CREDENTIALS");
+        }
+        const hashPassword = await bcrypt.compare(password, user.password);
+
+        if(hashPassword){
+            res.status(200).send("Login successfull........");
+        }else{
+            throw new Error("INVALID CREDENTIALS")
+        }
+
+    }catch(error){
+        res.status(400).json({
+            error: "Failed to login",
+            details: error.message,
+        });
+    }
+})
 
 app.get("/user", async (req, res) => {
     const userEmail = req.body.email;
@@ -139,8 +165,8 @@ app.patch("/user/:userId", async (req, res) => {
         if (!isUpdateAllowed) {
             throw new Error("Update not allowed");
         }
-        if(newUser?.skills.length > 10){
-            throw new Error("Skills cannot be more than 10.")
+        if (newUser?.skills.length > 10) {
+            throw new Error("Skills cannot be more than 10.");
         }
         await User.findByIdAndUpdate({ _id: userId }, newUser);
         res.send("User updated successfully.");
