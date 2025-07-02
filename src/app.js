@@ -6,13 +6,12 @@ const { validateUserData } = require("./utils/ValidateUser");
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
-const {userAuth} = require("./middleware/auth");
+const { userAuth } = require("./middleware/auth");
 
 app.use(express.json());
 app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
-
     try {
         const { firstName, lastName, email, password } = req.body;
         const passwordHash = await bcrypt.hash(password, 10);
@@ -41,11 +40,13 @@ app.post("/login", async (req, res) => {
         if (!user) {
             res.status(400).send("INVALID CREDENTIALS");
         }
-        const hashPassword = await bcrypt.compare(password, user.password);
+        const hashPassword = await user.isPasswordValid(password);
 
         if (hashPassword) {
-            const token = await jwt.sign({ _id: user._id }, "Vijay@Work123", {expiresIn : '2d'});
-            res.cookie("token", token, {expires : new Date(Date.now() + 8 * 36000000)});
+            const token = await user.getJwt();
+            res.cookie("token", token, {
+                expires: new Date(Date.now() + 8 * 36000000),
+            });
             res.status(200).send("Login successfull........");
         } else {
             throw new Error("INVALID CREDENTIALS");
@@ -73,7 +74,7 @@ app.get("/profile", userAuth, async (req, res) => {
 app.post("/sendConnectionRequest", userAuth, (req, res) => {
     const user = req.user;
     res.status(200).send(`${user.firstName} sent connection request.`);
-})
+});
 
 app.get("/user", async (req, res) => {
     const userEmail = req.body.email;
