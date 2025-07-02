@@ -1,15 +1,24 @@
-const adminAuth = (req, res, next) => {
-    console.log("Admin auth is getting checked");
-    const token = "xz";
-    const isAdminAuthorised = token === "xyz";
+const jwt = require("jsonwebtoken");
+const User = require("../models/user");
 
-    if (!isAdminAuthorised){
-        res.status(401).send("unauthorised request")
-    }else{
+const userAuth = async (req, res, next) => {
+    try {
+        const { token } = req.cookies;
+        if (!token) {
+            throw new Error("Invlid token");
+        }
+        const decodedUser = await jwt.verify(token, "Vijay@Work123");
+        const { _id } = decodedUser;
+        const user = await User.findById(_id);
+        if (!user) {
+            throw new Error("User not found");
+        }
+        req.user = user;
         next();
+    } catch (error) {
+        res.status(400).json({details: error.message});
     }
-}
-
+};
 module.exports = {
-    adminAuth
-}   
+    userAuth,
+};

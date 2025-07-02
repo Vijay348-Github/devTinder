@@ -1,26 +1,17 @@
 const express = require("express");
-const { adminAuth } = require("./middleware/auth");
 const connectDb = require("./config/database");
 const app = express();
 const User = require("./models/user");
 const { validateUserData } = require("./utils/ValidateUser");
 const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+const {userAuth} = require("./middleware/auth");
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
-    // Hard coded values
-
-    // const user = new User({
-    //     firstName: "Virat",
-    //     lastName: "Kohli",
-    //     email: "virat@18.com",
-    //     age: 38,
-    //     gender: "male",
-    // });
-
-    // Dynamic data
-
 
     try {
         const { firstName, lastName, email, password } = req.body;
@@ -35,7 +26,6 @@ app.post("/signup", async (req, res) => {
         await user.save();
         res.send("User added successfully.");
     } catch (error) {
-        console.log("User not added successfully: ", error.message);
         res.status(500).json({
             error: "Failed to create user",
             details: error.message,
@@ -44,27 +34,45 @@ app.post("/signup", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-    try{
-        const {email, password} = req.body;
+    try {
+        const { email, password } = req.body;
 
-        const user = await User.findOne({email: email});
-        if(!user){
+        const user = await User.findOne({ email: email });
+        if (!user) {
             res.status(400).send("INVALID CREDENTIALS");
         }
         const hashPassword = await bcrypt.compare(password, user.password);
 
-        if(hashPassword){
+        if (hashPassword) {
+            const token = await jwt.sign({ _id: user._id }, "Vijay@Work123", {expiresIn : '2d'});
+            res.cookie("token", token, {expires : new Date(Date.now() + 8 * 36000000)});
             res.status(200).send("Login successfull........");
-        }else{
-            throw new Error("INVALID CREDENTIALS")
+        } else {
+            throw new Error("INVALID CREDENTIALS");
         }
-
-    }catch(error){
+    } catch (error) {
         res.status(400).json({
             error: "Failed to login",
             details: error.message,
         });
     }
+});
+
+app.get("/profile", userAuth, async (req, res) => {
+    try {
+        const user = req.user;
+        if (!user) {
+            throw new Error("User doesn't exist.");
+        }
+        res.status(200).send(user);
+    } catch (error) {
+        res.status(401).json({ details: error.message });
+    }
+});
+
+app.post("/sendConnectionRequest", userAuth, (req, res) => {
+    const user = req.user;
+    res.status(200).send(`${user.firstName} sent connection request.`);
 })
 
 app.get("/user", async (req, res) => {
