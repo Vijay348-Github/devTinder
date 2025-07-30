@@ -1,0 +1,56 @@
+const express = require("express");
+const authRouter = express.Router();
+const User = require("../models/user");
+const bcrypt = require("bcrypt");
+const { validateUserData } = require("../utils/ValidateUser");
+
+
+authRouter.post("/signup", async (req, res) => {
+    try {
+        const { firstName, lastName, email, password } = req.body;
+        const passwordHash = await bcrypt.hash(password, 10);
+        const user = new User({
+            firstName,
+            lastName,
+            email,
+            password: passwordHash,
+        });
+        validateUserData(req);
+        await user.save();
+        res.send("User added successfully.");
+    } catch (error) {
+        res.status(500).json({
+            error: "Failed to create user",
+            details: error.message,
+        });
+    }
+});
+
+authRouter.post("/login", async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        const user = await User.findOne({ email: email });
+        if (!user) {
+            res.status(400).send("INVALID CREDENTIALS");
+        }
+        const hashPassword = await user.isPasswordValid(password);
+
+        if (hashPassword) {
+            const token = await user.getJwt();
+            res.cookie("token", token, {
+                expires: new Date(Date.now() + 8 * 36000000),
+            });
+            res.status(200).send("Login successfull........");
+        } else {
+            throw new Error("INVALID CREDENTIALS");
+        }
+    } catch (error) {
+        res.status(400).json({
+            error: "Failed to login",
+            details: error.message,
+        });
+    }
+});
+
+module.exports = authRouter;
