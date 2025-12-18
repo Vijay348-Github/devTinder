@@ -5,6 +5,7 @@ const { userAuth } = require("../middleware/auth");
 
 requestRouter.post("/sendConnectionRequest", userAuth, (req, res) => {
     const user = req.user;
+    console.log("Connection request sent.");
     res.status(200).send(`${user.firstName} sent connection request.`);
 });
 

@@ -26,13 +26,15 @@ authRouter.post("/signup", async (req, res) => {
     }
 });
 
+
+
 authRouter.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
 
         const user = await User.findOne({ email: email });
         if (!user) {
-            res.status(400).send("INVALID CREDENTIALS");
+            return res.status(400).send("INVALID CREDENTIALS");
         }
         const hashPassword = await user.isPasswordValid(password);
 
@@ -52,5 +54,13 @@ authRouter.post("/login", async (req, res) => {
         });
     }
 });
+
+authRouter.post("/logout", async (req, res) => {
+    res.cookie("token", null, {
+        expires: new Date(Date.now())
+    });
+
+    res.status(200).send("Logout successful.")
+})
 
 module.exports = authRouter;
