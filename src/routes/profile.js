@@ -25,7 +25,6 @@ profileRouter.post("/profile/edit", userAuth, async (req, res) => {
         if (!checkIfEditIsAlllowedForTheField) {
             return res.status(400).send("Field not allowed not edit.");
         }
-
         const loggedInUser = req.user;
         Object.keys(req.body).forEach((field) => {
             loggedInUser[field] = req.body[field];

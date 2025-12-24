@@ -7,13 +7,15 @@ const { validateUserData } = require("../utils/ValidateUser");
 
 authRouter.post("/signup", async (req, res) => {
     try {
-        const { firstName, lastName, email, password } = req.body;
+        const { firstName, lastName, email, password, age, gender } = req.body;
         const passwordHash = await bcrypt.hash(password, 10);
         const user = new User({
             firstName,
             lastName,
             email,
             password: passwordHash,
+            age,
+            gender,
         });
         validateUserData(req);
         await user.save();
@@ -21,7 +23,7 @@ authRouter.post("/signup", async (req, res) => {
     } catch (error) {
         res.status(500).json({
             error: "Failed to create user",
-            details: error.message,
+            details: error.message/n,
         });
     }
 });
