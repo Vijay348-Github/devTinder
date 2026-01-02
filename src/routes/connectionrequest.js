@@ -21,22 +21,24 @@ requestRouter.post(
             }
 
             const toUserExist = await User.findById(toId);
-            if(!toUserExist){
+            if (!toUserExist) {
                 return res.status(404).json({
-                  message: "The user you are trying to connect with does not exist"  
-                })
+                    message:
+                        "The user you are trying to connect with does not exist",
+                });
             }
 
             const existingRequest = await ConnectionRequest.findOne({
                 $or: [
-                    {fromId, toId},
-                    {fromId: toId, toId: fromId}
+                    { fromId, toId },
+                    { fromId: toId, toId: fromId },
                 ],
-            })
-            if(existingRequest){
+            });
+            if (existingRequest) {
                 return res.status(400).json({
-                    message: "A connection request already exixts between these users."
-                })
+                    message:
+                        "A connection request already exixts between these users.",
+                });
             }
 
             const data = new ConnectionRequest({
@@ -53,6 +55,46 @@ requestRouter.post(
             res.status(500).json({
                 message: "Connection request failed",
                 error: error.message,
+            });
+        }
+    }
+);
+
+requestRouter.post(
+    "/request/review/:status/:requestId",
+    userAuth,
+    async (req, res) => {
+        try {
+            const loggedInUser = req.user;
+            const { status, requestId } = req.params;
+
+            const allowedStatus = ["accepted", "rejected"];
+            if (!allowedStatus.includes(status)) {
+                return res.status(400).json({
+                    message: "Status is not valid.",
+                });
+            }
+
+            const connectionRequest = await ConnectionRequest.findOne({
+                _id: requestId,
+                toId: loggedInUser._id,
+                status: "interested",
+            });
+            if (!connectionRequest) {
+                return res.status(404).json({
+                    message: "No pending connection request found.",
+                });
+            }
+
+            connectionRequest.status = status;
+            const data = await connectionRequest.save();
+            res.status(200).json({
+                message: "Connection request " + status,
+                data,
+            });
+        } catch (error) {
+            res.status(500).json({
+                message: "Failed to review connection request",
             });
         }
     }

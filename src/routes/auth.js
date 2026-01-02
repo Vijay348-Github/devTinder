@@ -23,7 +23,7 @@ authRouter.post("/signup", async (req, res) => {
     } catch (error) {
         res.status(500).json({
             error: "Failed to create user",
-            details: error.message/n,
+            details: error.message,
         });
     }
 });
