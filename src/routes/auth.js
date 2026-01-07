@@ -45,7 +45,7 @@ authRouter.post("/login", async (req, res) => {
             res.cookie("token", token, {
                 expires: new Date(Date.now() + 8 * 36000000),
             });
-            res.status(200).send("Login successfull........");
+            res.status(200).send(user);
         } else {
             throw new Error("INVALID CREDENTIALS");
         }
