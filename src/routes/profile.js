@@ -17,13 +17,13 @@ profileRouter.get("/profile/view", userAuth, async (req, res) => {
     }
 });
 
-profileRouter.post("/profile/edit", userAuth, async (req, res) => {
+profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
     try {
         const checkIfEditIsAlllowedForTheField = validateProfileDataToBeEdited(
-            req.body
+            req.body,
         );
         if (!checkIfEditIsAlllowedForTheField) {
-            return res.status(400).send("Field not allowed not edit.");
+            return res.status(400).send("Field not allowed to edit.");
         }
         const loggedInUser = req.user;
         Object.keys(req.body).forEach((field) => {
@@ -31,6 +31,9 @@ profileRouter.post("/profile/edit", userAuth, async (req, res) => {
         });
 
         await loggedInUser.save();
+        console.log("BODY:", req.body);
+        console.log("USER:", req.user);
+
         return res.status(200).json({
             message: ` ${loggedInUser.firstName}, your profile is updated successfully.`,
             user: loggedInUser,
@@ -40,7 +43,7 @@ profileRouter.post("/profile/edit", userAuth, async (req, res) => {
     }
 });
 
-profileRouter.post("/profile/passwordchange", userAuth, async (req, res) => {
+profileRouter.patch("/profile/passwordchange", userAuth, async (req, res) => {
     try {
         const { oldPassword, newPassword } = req.body;
 
@@ -53,7 +56,7 @@ profileRouter.post("/profile/passwordchange", userAuth, async (req, res) => {
         const userLoggedIn = req.user;
         const compareOldAndLoggedInPassword = await bcrypt.compare(
             oldPassword,
-            userLoggedIn.password
+            userLoggedIn.password,
         );
 
         if (!compareOldAndLoggedInPassword) {
@@ -64,7 +67,7 @@ profileRouter.post("/profile/passwordchange", userAuth, async (req, res) => {
             return res
                 .status(400)
                 .send(
-                    "New Passwrod is not strong enough, so please enter a new one"
+                    "New Passwrod is not strong enough, so please enter a new one",
                 );
         }
 

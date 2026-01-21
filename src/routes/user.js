@@ -1,7 +1,7 @@
 const userRouter = require("express").Router();
 const { userAuth } = require("../middleware/auth");
 const ConnectionRequest = require("../models/connectionrequest");
-const USER_FIELDS = "firstName lastName photo age gender abouut";
+const USER_FIELDS = "firstName lastName photo age gender about";
 const User = require("../models/user");
 
 userRouter.get("/user/requests/received", userAuth, async (req, res) => {
