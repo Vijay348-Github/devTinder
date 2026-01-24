@@ -1,7 +1,7 @@
 const validator = require("validator");
 
 const validateUserData = (req) => {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password, age, about, gender } = req.body;
 
     if (!firstName || !lastName) {
         throw new Error("Name is not valid.");
