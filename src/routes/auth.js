@@ -4,10 +4,11 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const { validateUserData } = require("../utils/ValidateUser");
 
-
 authRouter.post("/signup", async (req, res) => {
     try {
-        const { firstName, lastName, email, password, age, gender, about } = req.body;
+        validateUserData(req);
+        const { firstName, lastName, email, password, age, gender, about } =
+            req.body;
         const passwordHash = await bcrypt.hash(password, 10);
         const user = new User({
             firstName,
@@ -17,9 +18,12 @@ authRouter.post("/signup", async (req, res) => {
             age,
             gender,
         });
-        validateUserData(req);
-        await user.save();
-        res.send("User added successfully.");
+        const savedUSer = await user.save();
+        const token = await savedUSer.getJwt();
+        res.cookie("token", token, {
+            expires: new Date(Date.now() + 8 * 36000000),
+        });
+        res.status(201).send(savedUSer);
     } catch (error) {
         res.status(500).json({
             error: "Failed to create user",
@@ -27,8 +31,6 @@ authRouter.post("/signup", async (req, res) => {
         });
     }
 });
-
-
 
 authRouter.post("/login", async (req, res) => {
     try {
@@ -59,10 +61,10 @@ authRouter.post("/login", async (req, res) => {
 
 authRouter.post("/logout", async (req, res) => {
     res.cookie("token", null, {
-        expires: new Date(Date.now())
+        expires: new Date(Date.now()),
     });
 
-    res.status(200).send("Logout successful.")
-})
+    res.status(200).send("Logout successful.");
+});
 
 module.exports = authRouter;
