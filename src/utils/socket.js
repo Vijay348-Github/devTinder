@@ -7,7 +7,12 @@ const startSocketServer = (server) => {
         },
     });
     io.on("connection", (socket) => {
-        socket.on("joinChat", () => {});
+        socket.on("joinChat", ({ userId, messagetoid }) => {
+            const createRoomId = [userId, messagetoid].sort().join("-");
+            socket.join(createRoomId);
+            console.log(createRoomId);
+            
+        });
         socket.on("sendMessage", () => {});
         socket.on("disconnect", () => {});
     });
