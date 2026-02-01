@@ -11,9 +11,12 @@ const startSocketServer = (server) => {
             const createRoomId = [userId, messagetoid].sort().join("-");
             socket.join(createRoomId);
             console.log(createRoomId);
-            
         });
-        socket.on("sendMessage", () => {});
+        socket.on("sendMessage", ({ from, to, content, timestamp }) => {
+            const roomId = [from, to].sort().join("-");
+            io.to(roomId).emit("receiveMessage", { from, content, timestamp });
+        });
+
         socket.on("disconnect", () => {});
     });
 };
