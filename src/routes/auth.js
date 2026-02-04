@@ -17,6 +17,7 @@ authRouter.post("/signup", async (req, res) => {
             password: passwordHash,
             age,
             gender,
+            about,
         });
         const savedUSer = await user.save();
         const token = await savedUSer.getJwt();
