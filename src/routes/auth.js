@@ -3,6 +3,8 @@ const authRouter = express.Router();
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const { validateUserData } = require("../utils/ValidateUser");
+const sendEmail = require("../utils/sendemail");
+const welcomeEmail = require("../utils/mail_templates/signup");
 
 authRouter.post("/signup", async (req, res) => {
     try {
@@ -24,6 +26,16 @@ authRouter.post("/signup", async (req, res) => {
         res.cookie("token", token, {
             expires: new Date(Date.now() + 8 * 36000000),
         });
+        try {
+            const emailContent = welcomeEmail({ name: firstName });
+            await sendEmail({
+                to: savedUSer.email,
+                subject: emailContent.subject,
+                html: emailContent.html,
+            });
+        } catch (emailErr) {
+            console.error("Welcome email failed:", emailErr.message);
+        }
         res.status(201).send(savedUSer);
     } catch (error) {
         res.status(500).json({

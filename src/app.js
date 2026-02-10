@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const connectDb = require("./config/database");
 const app = express();
@@ -20,12 +21,14 @@ const requestRouter = require("./routes/connectionrequest");
 const userRouter = require("./routes/user");
 const chatRouter = require("./routes/chatroute");
 const startSocketServer = require("./utils/socket");
+const emailRoute = require("./routes/emailroute");
 
 app.use("/", authRouter);
 app.use("/", profileRouter);
 app.use("/", requestRouter);
 app.use("/", userRouter);
 app.use("/", chatRouter);
+app.use("/", emailRoute);
 
 const server = http.createServer(app);
 startSocketServer(server);

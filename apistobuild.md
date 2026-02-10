@@ -37,3 +37,16 @@ Status of connections - ignore, interested, accepted, rejected
 
 ## chat feature real time using socket.io
  - /chat/:messagetoid
+
+
+## Ports on  which frontend and backend deployed
+
+ - Frontend - http://52.91.222.110/
+ - Backend - http://52.91.222.110:3000/
+
+ Domain -> 52.91.222.110 = connect.com
+
+## connect OR bridge OR connect.social
+
+ Frontend - connect.com
+ Backend - connect.com/api

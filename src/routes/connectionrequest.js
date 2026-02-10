@@ -3,6 +3,8 @@ const requestRouter = express.Router();
 const { userAuth } = require("../middleware/auth");
 const ConnectionRequest = require("../models/connectionrequest");
 const User = require("../models/user");
+const connectionRequestEmail = require("../utils/mail_templates/connectionrequest");
+const sendEmail = require("../utils/sendemail");
 
 requestRouter.post(
     "/send/request/:status/:toId",
@@ -47,6 +49,26 @@ requestRouter.post(
                 status,
             });
             await data.save();
+            if (status === "interested") {
+                try {
+                    const fullName =
+                        `${req.user.firstName} ${req.user.lastName || ""}`.trim();
+                    const emailContent = connectionRequestEmail({
+                        fromName: fullName,
+                    });
+
+                    await sendEmail({
+                        to: toUserExist.email,
+                        subject: emailContent.subject,
+                        html: emailContent.html,
+                    });
+                } catch (emailErr) {
+                    console.error(
+                        "Connection request email failed:",
+                        emailErr.message,
+                    );
+                }
+            }
             res.status(200).json({
                 message: "Connection request sent successfully.",
                 data,
@@ -57,7 +79,7 @@ requestRouter.post(
                 error: error.message,
             });
         }
-    }
+    },
 );
 
 requestRouter.post(
@@ -97,7 +119,7 @@ requestRouter.post(
                 message: "Failed to review connection request",
             });
         }
-    }
+    },
 );
 
 module.exports = requestRouter;
