@@ -12,9 +12,12 @@ userRouter.get("/user/requests/received", userAuth, async (req, res) => {
             status: "interested",
         }).populate("fromId", "firstName lastName photo age gender about");
 
+        const validRequests = connectionRequests.filter(
+            (req) => req.fromId !== null,
+        );
         res.status(200).json({
             message: "Fetched received connection requests successfully",
-            data: connectionRequests,
+            data: validRequests,
         });
     } catch (error) {
         res.status(500).json({
@@ -109,6 +112,5 @@ userRouter.get("/user/:id", userAuth, async (req, res) => {
         res.status(500).json({ message: "Failed to fetch user details" });
     }
 });
-
 
 module.exports = userRouter;
