@@ -36,7 +36,7 @@ startSocketServer(server);
 connectDb()
     .then(() => {
         console.log("Database connection established succesfully.");
-        server.listen(3000, () => {
+        server.listen(process.env.PORT, () => {
             console.log("Server running on port 3000");
         });
     })
