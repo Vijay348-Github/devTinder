@@ -1,4 +1,5 @@
 require("dotenv").config();
+require("./utils/schedulecronjob");
 const express = require("express");
 const connectDb = require("./config/database");
 const app = express();
