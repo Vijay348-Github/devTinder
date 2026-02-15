@@ -1,43 +1,59 @@
 const cron = require("node-cron");
-const { subDays, startOfDay, endOfDay } = require("date-fns");
-const connectionRequest = require("../models/connectionrequest");
-const sendEmail = require("./sendemail");
+const { subDays } = require("date-fns");
+const ConnectionRequest = require("../models/connectionrequest");
+const sendEmail = require("../utils/sendemail");
+const pendingReminderTemplate = require("../utils/mail_templates/requestremainder");
 
 cron.schedule("0 8 * * *", async () => {
+    console.log("⏰ Running daily pending request reminder job...");
+
     try {
-        const pendingConnections = await connectionRequest
-            .find({
-                status: "interested",
-                createdAt: { $lte: subDays(new Date(), 1) },
-            })
-            .populate("fromId toId");
+        // Finding requests older than 24 hours & still pending
+        const pendingConnections = await ConnectionRequest.find({
+            status: "interested",
+            createdAt: { $lte: subDays(new Date(), 1) },
+        }).populate("toId");
 
-        const listOfEmailIds = [
-            ...new Set(
-                pendingConnections
-                    .filter((r) => r.toId && r.toId.email)
-                    .map((r) => r.toId.email),
-            ),
-        ];
-        for (const email of listOfEmailIds) {
+        if (!pendingConnections.length) {
+            console.log("✅ No pending reminders to send today.");
+            return;
+        }
+
+        const userMap = {};
+
+        pendingConnections.forEach((req) => {
+            if (req.toId && req.toId.email) {
+                const email = req.toId.email;
+
+                if (!userMap[email]) {
+                    userMap[email] = {
+                        name: req.toId.firstName || "User",
+                        count: 0,
+                    };
+                }
+
+                userMap[email].count += 1;
+            }
+        });
+
+        // 3️⃣ Send one email per user
+        for (const email in userMap) {
+            const { name, count } = userMap[email];
+
             try {
-                const emailResponse = await sendEmail({
+                await sendEmail({
                     to: email,
-                    subject: "Pending Connection Requests",
-                    text: "You have pending connection requests from yesterday. Please check your account for more details.",
-                    html: `
-        <h2>Pending Connection Requests</h2>
-        <p>You have pending connection requests which are older than 24 hours.</p>
-        <p>Please log in to your account to review them.</p>
-    `,
+                    subject: `You have ${count} pending connection request(s)`,
+                    text: `Hi ${name}, you have ${count} pending connection request(s) waiting.`,
+                    html: pendingReminderTemplate({ name, count }),
                 });
-
-                console.log(`Email sent to ${email}:`, emailResponse);
             } catch (error) {
-                console.error(`Error sending email to ${email}:`, error);
+                console.error(`Failed to send email to ${email}:`, error);
             }
         }
+
+        console.log("🎉 Reminder job completed successfully.");
     } catch (error) {
-        console.error("Error in cron job:", error);
+        console.error("🔥 Error in reminder cron job:", error);
     }
 });
