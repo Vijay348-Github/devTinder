@@ -15,8 +15,13 @@ const generateRoomId = (userId1, userId2) => {
 const onlineUsers = new Map();
 
 const startSocketServer = (server) => {
+
     const io = socket(server, {
-        cors: { origin: "http://localhost:5173", credentials: true },
+        path: "/api/socket.io", // MUST MATCH FRONTEND
+        cors: {
+            origin: process.env.CLIENT_URL,
+            credentials: true,
+        },
     });
 
     io.on("connection", (socket) => {
